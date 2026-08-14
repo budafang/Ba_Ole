@@ -25,10 +25,11 @@ test("server renders the rainforest journal shell", async () => {
 });
 
 test("source keeps itinerary, expense, field-note, and PWA workflows", async () => {
-  const [page, data, layout, manifest, serviceWorker] = await Promise.all([
+  const [page, data, layout, styles, manifest, serviceWorker] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/data/trip.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../public/manifest.webmanifest", import.meta.url), "utf8"),
     readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
   ]);
@@ -40,7 +41,12 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(page, /itemId/);
   assert.match(page, /expense-link/);
   assert.match(page, /ExpenseEditor/);
-  assert.match(page, /固定資訊/);
+  assert.match(page, /ItemInfo/);
+  assert.match(page, /data-schedule-id/);
+  assert.match(page, /onPointerMove/);
+  assert.match(page, /公費總計/);
+  assert.match(page, /自費總計/);
+  assert.match(page, /conic-gradient/);
   assert.match(data, /Swak Ali/);
   assert.match(data, /Ba Ole/);
   assert.match(data, /AK1511/);
@@ -49,6 +55,8 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(data, /locked/);
   assert.match(data, /details/);
   assert.match(layout, /themeColor/);
+  assert.match(styles, /touch-action: none/);
+  assert.match(styles, /input, select, textarea \{ font-size: 16px; \}/);
   assert.match(manifest, /standalone/);
   assert.match(page, /updateViaCache: "none"/);
   assert.match(serviceWorker, /rainforest-journal-v3/);
