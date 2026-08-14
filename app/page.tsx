@@ -35,7 +35,7 @@ function expenseCategoryFor(item: ScheduleItem) {
 }
 
 function expenseSummary(expense?: Expense) {
-  return expense ? `${expense.currency} ${Number(expense.amount || 0).toLocaleString()}` : "加費用";
+  return expense ? `${expense.currency} ${Number(expense.amount || 0).toLocaleString()}` : "新增費用";
 }
 
 function mergeStoredDays(stored: TripDay[] | null) {
@@ -175,20 +175,22 @@ export default function Home() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div>
-          <p className="eyebrow">2026 · SARAWAK FIELD JOURNAL</p>
-          <h1>雨林行程紀錄</h1>
+        <div className="brand-block">
+          <span className="brand-mark" aria-hidden="true">BA</span>
+          <div>
+            <p className="eyebrow">SARAWAK · 2026</p>
+            <h1>雨林行程紀錄</h1>
+          </div>
         </div>
         <div className={`offline-pill ${online ? "is-online" : ""}`}><span />{online ? "已連線" : "離線可用"}</div>
       </header>
 
-      <section className="hero-card">
-        <div className="hero-copy">
-          <p className="eyebrow light">SWAK ALI × BA OLE</p>
-          <h2>把變動，留下來。</h2>
-          <p>每日行程可以現場改，重要的支出與田野觀察，則各自完整保存。</p>
+      <section className="trip-ribbon" aria-label="旅程資訊">
+        <div>
+          <strong>Swak Ali × Ba Ole</strong>
+          <span>8/19–8/30 · 砂拉越</span>
         </div>
-        <div className="hero-stat"><strong>{formatDate(selectedDay.date)}</strong><span>目前選取日期</span></div>
+        <p><span>行程可修訂</span><span>費用獨立</span><span>記錄可匯出</span></p>
       </section>
 
       <div className="main-content">
@@ -214,22 +216,22 @@ export default function Home() {
 
 function ScheduleView({ days, selectedDate, selectedDay, expenses, completedItems, allItems, onSelectDate, onEdit, onStatus, onExpense, onAdd }: { days: TripDay[]; selectedDate: string; selectedDay: TripDay; expenses: Expense[]; completedItems: number; allItems: number; onSelectDate: (date: string) => void; onEdit: (item: ScheduleItem) => void; onStatus: (item: ScheduleItem) => void; onExpense: (date: string, item: ScheduleItem) => void; onAdd: () => void }) {
   return <>
-    <section className="section-heading"><div><p className="eyebrow">FLEXIBLE ITINERARY</p><h2>每日行程</h2></div><button className="ghost-button" onClick={() => download("swak-ali-itinerary.json", JSON.stringify(days, null, 2))}>匯出行程</button></section>
-    <div className="progress-line"><span style={{ width: `${allItems ? (completedItems / allItems) * 100 : 0}%` }} /><small>{completedItems}/{allItems} 項已完成</small></div>
+    <section className="section-heading"><div><p className="eyebrow">FIELD ITINERARY</p><h2>每日行程</h2><p className="section-lede">選擇日期，直接查看、修訂或記錄費用。</p></div><button className="ghost-button" onClick={() => download("swak-ali-itinerary.json", JSON.stringify(days, null, 2))}>匯出</button></section>
+    <div className="schedule-status"><div className="progress-track"><span style={{ width: `${allItems ? (completedItems / allItems) * 100 : 0}%` }} /></div><small>{completedItems}/{allItems} 項完成</small></div>
     <div className="day-picker" role="list" aria-label="選擇日期">
       {days.map((day) => <button key={day.date} className={day.date === selectedDate ? "day-chip selected" : "day-chip"} onClick={() => onSelectDate(day.date)}><small>{day.weekday}</small><strong>{formatDate(day.date)}</strong><span>{day.area}</span></button>)}
     </div>
-    <details className="trip-briefing"><summary>行前提醒與全程固定資訊</summary><ul>{tripNotes.map((note) => <li key={note}>{note}</li>)}</ul></details>
     <section className="day-panel">
-      <div className="day-panel-top"><div><span className="date-label">{selectedDay.weekday} · {formatDate(selectedDay.date)} · {selectedDay.area}</span><h3>{selectedDay.title}</h3><p>{selectedDay.summary}</p></div><button className="add-button" onClick={onAdd}>＋ 新增</button></div>
+      <div className="day-panel-top"><div><span className="date-label">{selectedDay.weekday} · {formatDate(selectedDay.date)} · {selectedDay.area}</span><h3>{selectedDay.title}</h3><p>{selectedDay.summary}</p></div><button className="add-button" onClick={onAdd}>＋ 新增行程</button></div>
       <div className="schedule-list">{selectedDay.items.map((item) => <article className={`schedule-item ${item.status}`} key={item.id}>
         <button className="check-button" aria-label={`${item.title}標記完成`} onClick={() => onStatus(item)}>{item.status === "done" ? "✓" : ""}</button>
         <div className="schedule-time">{item.time}</div>
-        <div className="schedule-detail"><h4>{item.title}</h4>{item.location && <p className="location">⌖ {item.location}</p>}{item.note && <p>{item.note}</p>}{item.details && <ul className="schedule-details">{item.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>}</div>
-        <div className="schedule-actions"><button className="expense-link" onClick={() => onExpense(selectedDate, item)} aria-label={`${item.title}新增或編輯費用`}>💰 {expenseSummary(expenses.find((expense) => expense.itemId === item.id))}</button>{item.locked ? <span className="fixed-label">🔒 固定</span> : <button className="edit-link" onClick={() => onEdit(item)}>編輯</button>}</div>
+        <div className="schedule-detail"><h4>{item.title}</h4>{item.location && <p className="location">↳ {item.location}</p>}{item.note && <p>{item.note}</p>}{item.details && <ul className="schedule-details">{item.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>}</div>
+        <div className="schedule-actions"><button className="expense-link" onClick={() => onExpense(selectedDate, item)} aria-label={`${item.title}新增或編輯費用`}>{expenseSummary(expenses.find((expense) => expense.itemId === item.id))}</button>{item.locked ? <span className="fixed-label">固定資訊</span> : <button className="edit-link" onClick={() => onEdit(item)}>編輯</button>}</div>
       </article>)}</div>
+      <div className="schedule-legend"><span><i />固定時間保留原始資料</span><span>其他行程可現場編輯</span></div>
     </section>
-    <p className="helper-note">這裡的行程是「現場工作版」：航班、集合、報到與退房等固定資訊會鎖定；其他活動可以現場改時間、改地點或加入臨時活動。</p>
+    <details className="trip-briefing"><summary>行前提醒與全程固定資訊</summary><ul>{tripNotes.map((note) => <li key={note}>{note}</li>)}</ul></details>
   </>;
 }
 

@@ -19,7 +19,7 @@ test("server renders the rainforest journal shell", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /<title>雨林行程紀錄 · Swak Ali × Ba Ole<\/title>/);
-  assert.match(html, /把變動，留下來。/);
+  assert.match(html, /行程可修訂/);
   assert.match(html, /每日行程/);
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape|Starter Project/);
 });
