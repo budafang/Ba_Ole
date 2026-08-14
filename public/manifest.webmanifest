@@ -1,0 +1,11 @@
+{
+  "name": "雨林行程紀錄",
+  "short_name": "雨林紀錄",
+  "description": "Swak Ali × Ba Ole 2026 雨林行程、記帳與田野記錄",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f1e8",
+  "theme_color": "#0e2b26",
+  "lang": "zh-Hant",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
