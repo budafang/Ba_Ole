@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "雨林行程紀錄 · Swak Ali × Ba Ole",
     description: "2026 砂拉越雨林行程、支出與田野記錄。",
-    images: [{ url: "/og.png", width: 1728, height: 910, alt: "雨林行程紀錄" }],
+    images: [{ url: "/og.png", width: 1536, height: 1024, alt: "雨林行程紀錄" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#123b32",
+  themeColor: "#eef4ea",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

@@ -50,5 +50,7 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(data, /details/);
   assert.match(layout, /themeColor/);
   assert.match(manifest, /standalone/);
-  assert.match(serviceWorker, /rainforest-journal-v2/);
+  assert.match(page, /updateViaCache: "none"/);
+  assert.match(serviceWorker, /rainforest-journal-v3/);
+  assert.match(serviceWorker, /networkFirst/);
 });

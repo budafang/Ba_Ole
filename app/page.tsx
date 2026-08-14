@@ -85,6 +85,7 @@ export default function Home() {
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
+    let reloadingForUpdate = false;
     const timer = window.setTimeout(() => {
       setDays(mergeStoredDays(readStored<TripDay[] | null>("swak-ali-days", null)));
       setExpenses(readStored("swak-ali-expenses", []));
@@ -94,13 +95,24 @@ export default function Home() {
     setOnline(navigator.onLine);
     const goOnline = () => setOnline(true);
     const goOffline = () => setOnline(false);
+    const reloadForUpdate = () => {
+      if (reloadingForUpdate) return;
+      reloadingForUpdate = true;
+      window.location.reload();
+    };
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("controllerchange", reloadForUpdate);
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
+        .then((registration) => registration.update())
+        .catch(() => undefined);
+    }
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
+      navigator.serviceWorker?.removeEventListener("controllerchange", reloadForUpdate);
     };
   }, []);
 
