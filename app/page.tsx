@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { cultureImages, cultureResources, tripDays, type ScheduleItem, type TripDay } from "./data/trip";
+import { cultureImages, cultureResources, tripDays, tripNotes, type ScheduleItem, type TripDay } from "./data/trip";
 
 type Tab = "schedule" | "expenses" | "field" | "culture";
-type Expense = { id: string; date: string; category: string; item: string; amount: number; currency: string; payer: string; note: string };
+type Expense = { id: string; date: string; category: string; item: string; amount: number; currency: string; payer: string; note: string; itemId?: string };
+type ExpenseDraft = Omit<Expense, "id"> & { id?: string };
 type FieldNote = { id: string; date: string; place: string; person: string; type: string; title: string; body: string; createdAt: string };
 
-const emptyExpense: Omit<Expense, "id"> = { date: "2026-08-21", category: "交通", item: "", amount: 0, currency: "RM", payer: "", note: "" };
+const emptyExpense: ExpenseDraft = { date: "2026-08-21", category: "交通", item: "", amount: 0, currency: "RM", payer: "", note: "" };
 const emptyFieldNote: Omit<FieldNote, "id" | "createdAt"> = { date: "2026-08-26", place: "", person: "", type: "觀察", title: "", body: "" };
 
 function readStored<T>(key: string, fallback: T): T {
@@ -23,6 +24,35 @@ function readStored<T>(key: string, fallback: T): T {
 function formatDate(date: string) {
   const [, month, day] = date.split("-");
   return `${Number(month)}/${Number(day)}`;
+}
+
+function expenseCategoryFor(item: ScheduleItem) {
+  const text = `${item.title} ${item.location ?? ""} ${item.note ?? ""}`;
+  if (/住宿|入住|飯店|旅館/.test(text)) return "住宿";
+  if (/採買|白米|蛋|乾糧|早餐|午餐|晚餐|餐飲/.test(text)) return "採買";
+  if (/機場|航|車|移動|Taxi|Grab|車資|→/.test(text)) return "交通";
+  return "活動";
+}
+
+function expenseSummary(expense?: Expense) {
+  return expense ? `${expense.currency} ${Number(expense.amount || 0).toLocaleString()}` : "加費用";
+}
+
+function mergeStoredDays(stored: TripDay[] | null) {
+  if (!stored?.length) return tripDays;
+  return tripDays.map((baseDay) => {
+    const savedDay = stored.find((day) => day.date === baseDay.date);
+    if (!savedDay) return baseDay;
+    const savedItems = savedDay.items ?? [];
+    const items = baseDay.items.map((baseItem) => {
+      const savedItem = savedItems.find((item) => item.id === baseItem.id);
+      if (!savedItem) return baseItem;
+      if (baseItem.locked) return { ...baseItem, status: savedItem.status ?? baseItem.status };
+      return { ...baseItem, ...savedItem };
+    });
+    const addedItems = savedItems.filter((item) => !baseDay.items.some((baseItem) => baseItem.id === item.id));
+    return { ...baseDay, ...savedDay, items: [...items, ...addedItems] };
+  }).concat(stored.filter((day) => !tripDays.some((baseDay) => baseDay.date === day.date)));
 }
 
 function download(filename: string, text: string, type = "application/json") {
@@ -46,16 +76,21 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState(tripDays[0].date);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [fieldNotes, setFieldNotes] = useState<FieldNote[]>([]);
-  const [expenseForm, setExpenseForm] = useState(emptyExpense);
+  const [expenseForm, setExpenseForm] = useState<ExpenseDraft>(emptyExpense);
   const [fieldForm, setFieldForm] = useState(emptyFieldNote);
   const [editingItem, setEditingItem] = useState<{ date: string; item: ScheduleItem } | null>(null);
+  const [expenseEditor, setExpenseEditor] = useState<ExpenseDraft | null>(null);
+  const [storageReady, setStorageReady] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
-    setDays(readStored("swak-ali-days", tripDays));
-    setExpenses(readStored("swak-ali-expenses", []));
-    setFieldNotes(readStored("swak-ali-field-notes", []));
+    const timer = window.setTimeout(() => {
+      setDays(mergeStoredDays(readStored<TripDay[] | null>("swak-ali-days", null)));
+      setExpenses(readStored("swak-ali-expenses", []));
+      setFieldNotes(readStored("swak-ali-field-notes", []));
+      setStorageReady(true);
+    }, 0);
     setOnline(navigator.onLine);
     const goOnline = () => setOnline(true);
     const goOffline = () => setOnline(false);
@@ -63,14 +98,15 @@ export default function Home() {
     window.addEventListener("offline", goOffline);
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
     };
   }, []);
 
-  useEffect(() => { window.localStorage.setItem("swak-ali-days", JSON.stringify(days)); }, [days]);
-  useEffect(() => { window.localStorage.setItem("swak-ali-expenses", JSON.stringify(expenses)); }, [expenses]);
-  useEffect(() => { window.localStorage.setItem("swak-ali-field-notes", JSON.stringify(fieldNotes)); }, [fieldNotes]);
+  useEffect(() => { if (storageReady) window.localStorage.setItem("swak-ali-days", JSON.stringify(days)); }, [days, storageReady]);
+  useEffect(() => { if (storageReady) window.localStorage.setItem("swak-ali-expenses", JSON.stringify(expenses)); }, [expenses, storageReady]);
+  useEffect(() => { if (storageReady) window.localStorage.setItem("swak-ali-field-notes", JSON.stringify(fieldNotes)); }, [fieldNotes, storageReady]);
 
   const selectedDay = days.find((day) => day.date === selectedDate) ?? days[0];
   const completedItems = days.flatMap((day) => day.items).filter((item) => item.status === "done").length;
@@ -87,6 +123,30 @@ export default function Home() {
   function addItem(item: ScheduleItem) {
     setDays((current) => current.map((day) => day.date !== selectedDate ? day : { ...day, items: [...day.items, item] }));
     setIsAddingItem(false);
+  }
+
+  function openItemExpense(date: string, item: ScheduleItem) {
+    const existing = expenses.find((expense) => expense.itemId === item.id);
+    setExpenseEditor(existing ?? {
+      ...emptyExpense,
+      date,
+      category: expenseCategoryFor(item),
+      item: item.title,
+      itemId: item.id,
+    });
+  }
+
+  function saveExpenseDraft(draft: ExpenseDraft) {
+    if (!draft.item.trim() || !draft.amount) return;
+    setExpenses((current) => draft.id
+      ? current.map((expense) => expense.id === draft.id ? { ...draft, id: draft.id } as Expense : expense)
+      : [{ ...draft, id: crypto.randomUUID() } as Expense, ...current]);
+    setExpenseEditor(null);
+  }
+
+  function deleteExpense(id: string) {
+    setExpenses((current) => current.filter((expense) => expense.id !== id));
+    setExpenseEditor(null);
   }
 
   function saveExpense(event: React.FormEvent) {
@@ -132,14 +192,15 @@ export default function Home() {
       </section>
 
       <div className="main-content">
-        {tab === "schedule" && <ScheduleView days={days} selectedDate={selectedDate} selectedDay={selectedDay} completedItems={completedItems} allItems={allItems} onSelectDate={(date) => { setSelectedDate(date); setExpenseForm((current) => ({ ...current, date })); setFieldForm((current) => ({ ...current, date })); setEditingItem(null); }} onEdit={(item) => setEditingItem({ date: selectedDate, item })} onStatus={(item) => updateItem(selectedDate, { ...item, status: item.status === "done" ? "planned" : "done" })} onAdd={() => setIsAddingItem(true)} />}
-        {tab === "expenses" && <ExpensesView expenses={expenses} totals={totals} form={expenseForm} setForm={setExpenseForm} onSave={saveExpense} onDelete={(id) => setExpenses((current) => current.filter((expense) => expense.id !== id))} onExport={exportAll} />}
+        {tab === "schedule" && <ScheduleView days={days} selectedDate={selectedDate} selectedDay={selectedDay} expenses={expenses} completedItems={completedItems} allItems={allItems} onSelectDate={(date) => { setSelectedDate(date); setExpenseForm((current) => ({ ...current, date })); setFieldForm((current) => ({ ...current, date })); setEditingItem(null); }} onEdit={(item) => setEditingItem({ date: selectedDate, item })} onStatus={(item) => updateItem(selectedDate, { ...item, status: item.status === "done" ? "planned" : "done" })} onExpense={openItemExpense} onAdd={() => setIsAddingItem(true)} />}
+        {tab === "expenses" && <ExpensesView expenses={expenses} totals={totals} form={expenseForm} setForm={setExpenseForm} onSave={saveExpense} onDelete={deleteExpense} onExport={exportAll} />}
         {tab === "field" && <FieldView notes={fieldNotes} form={fieldForm} setForm={setFieldForm} onSave={saveFieldNote} onExport={exportFieldNotes} onDelete={(id) => setFieldNotes((current) => current.filter((note) => note.id !== id))} />}
         {tab === "culture" && <CultureView />}
       </div>
 
       {editingItem && <ItemEditor date={editingItem.date} item={editingItem.item} onClose={() => setEditingItem(null)} onSave={(item) => { updateItem(editingItem.date, item); setEditingItem(null); }} />}
       {isAddingItem && <ItemEditor date={selectedDate} onClose={() => setIsAddingItem(false)} onSave={addItem} />}
+      {expenseEditor && <ExpenseEditor draft={expenseEditor} onClose={() => setExpenseEditor(null)} onSave={saveExpenseDraft} onDelete={deleteExpense} />}
 
       <nav className="bottom-nav" aria-label="主要功能">
         <NavButton active={tab === "schedule"} icon="▦" label="每日行程" onClick={() => setTab("schedule")} />
@@ -151,27 +212,28 @@ export default function Home() {
   );
 }
 
-function ScheduleView({ days, selectedDate, selectedDay, completedItems, allItems, onSelectDate, onEdit, onStatus, onAdd }: { days: TripDay[]; selectedDate: string; selectedDay: TripDay; completedItems: number; allItems: number; onSelectDate: (date: string) => void; onEdit: (item: ScheduleItem) => void; onStatus: (item: ScheduleItem) => void; onAdd: () => void }) {
+function ScheduleView({ days, selectedDate, selectedDay, expenses, completedItems, allItems, onSelectDate, onEdit, onStatus, onExpense, onAdd }: { days: TripDay[]; selectedDate: string; selectedDay: TripDay; expenses: Expense[]; completedItems: number; allItems: number; onSelectDate: (date: string) => void; onEdit: (item: ScheduleItem) => void; onStatus: (item: ScheduleItem) => void; onExpense: (date: string, item: ScheduleItem) => void; onAdd: () => void }) {
   return <>
     <section className="section-heading"><div><p className="eyebrow">FLEXIBLE ITINERARY</p><h2>每日行程</h2></div><button className="ghost-button" onClick={() => download("swak-ali-itinerary.json", JSON.stringify(days, null, 2))}>匯出行程</button></section>
     <div className="progress-line"><span style={{ width: `${allItems ? (completedItems / allItems) * 100 : 0}%` }} /><small>{completedItems}/{allItems} 項已完成</small></div>
     <div className="day-picker" role="list" aria-label="選擇日期">
       {days.map((day) => <button key={day.date} className={day.date === selectedDate ? "day-chip selected" : "day-chip"} onClick={() => onSelectDate(day.date)}><small>{day.weekday}</small><strong>{formatDate(day.date)}</strong><span>{day.area}</span></button>)}
     </div>
+    <details className="trip-briefing"><summary>行前提醒與全程固定資訊</summary><ul>{tripNotes.map((note) => <li key={note}>{note}</li>)}</ul></details>
     <section className="day-panel">
       <div className="day-panel-top"><div><span className="date-label">{selectedDay.weekday} · {formatDate(selectedDay.date)} · {selectedDay.area}</span><h3>{selectedDay.title}</h3><p>{selectedDay.summary}</p></div><button className="add-button" onClick={onAdd}>＋ 新增</button></div>
       <div className="schedule-list">{selectedDay.items.map((item) => <article className={`schedule-item ${item.status}`} key={item.id}>
         <button className="check-button" aria-label={`${item.title}標記完成`} onClick={() => onStatus(item)}>{item.status === "done" ? "✓" : ""}</button>
         <div className="schedule-time">{item.time}</div>
-        <div className="schedule-detail"><h4>{item.title}</h4>{item.location && <p className="location">⌖ {item.location}</p>}{item.note && <p>{item.note}</p>}</div>
-        <button className="edit-link" onClick={() => onEdit(item)}>編輯</button>
+        <div className="schedule-detail"><h4>{item.title}</h4>{item.location && <p className="location">⌖ {item.location}</p>}{item.note && <p>{item.note}</p>}{item.details && <ul className="schedule-details">{item.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>}</div>
+        <div className="schedule-actions"><button className="expense-link" onClick={() => onExpense(selectedDate, item)} aria-label={`${item.title}新增或編輯費用`}>💰 {expenseSummary(expenses.find((expense) => expense.itemId === item.id))}</button>{item.locked ? <span className="fixed-label">🔒 固定</span> : <button className="edit-link" onClick={() => onEdit(item)}>編輯</button>}</div>
       </article>)}</div>
     </section>
-    <p className="helper-note">這裡的行程是「現場工作版」：點選任一天即可查看、完成、改時間、改地點或加入臨時活動。</p>
+    <p className="helper-note">這裡的行程是「現場工作版」：航班、集合、報到與退房等固定資訊會鎖定；其他活動可以現場改時間、改地點或加入臨時活動。</p>
   </>;
 }
 
-function ExpensesView({ expenses, totals, form, setForm, onSave, onDelete, onExport }: { expenses: Expense[]; totals: Record<string, number>; form: Omit<Expense, "id">; setForm: React.Dispatch<React.SetStateAction<Omit<Expense, "id">>>; onSave: (event: React.FormEvent) => void; onDelete: (id: string) => void; onExport: () => void }) {
+function ExpensesView({ expenses, totals, form, setForm, onSave, onDelete, onExport }: { expenses: Expense[]; totals: Record<string, number>; form: ExpenseDraft; setForm: React.Dispatch<React.SetStateAction<ExpenseDraft>>; onSave: (event: React.FormEvent) => void; onDelete: (id: string) => void; onExport: () => void }) {
   return <>
     <section className="section-heading"><div><p className="eyebrow">MONEY, SEPARATELY</p><h2>記帳</h2></div><button className="ghost-button" onClick={onExport}>匯出全部</button></section>
     <div className="money-summary"><div><span>目前筆數</span><strong>{expenses.length}</strong><small>筆支出</small></div>{Object.entries(totals).map(([currency, total]) => <div key={currency}><span>{currency} 小計</span><strong>{total.toLocaleString()}</strong><small>現場紀錄</small></div>)}{!Object.keys(totals).length && <div><span>開始後會顯示</span><strong>—</strong><small>各幣別小計</small></div>}</div>
@@ -198,8 +260,15 @@ function CultureView() {
   </>;
 }
 
+function ExpenseEditor({ draft, onClose, onSave, onDelete }: { draft: ExpenseDraft; onClose: () => void; onSave: (draft: ExpenseDraft) => void; onDelete: (id: string) => void }) {
+  const [form, setForm] = useState<ExpenseDraft>(draft);
+  const valid = form.item.trim() && Number(form.amount) > 0;
+
+  return <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="新增行程費用"><div className="modal-card expense-modal-card"><div className="modal-head"><div><span className="eyebrow">MONEY ON THE MOVE</span><h3>{draft.id ? "編輯行程費用" : "為行程新增費用"}</h3><p className="modal-context">{draft.itemId ? `已連結到：${draft.item}` : "這筆費用會獨立保存在記帳中"}</p></div><button className="close-button" onClick={onClose} aria-label="關閉">×</button></div><div className="form-grid"><label>日期<input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label><label>類別<select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}><option>交通</option><option>住宿</option><option>採買</option><option>餐飲</option><option>活動</option><option>其他</option></select></label><label className="wide">項目<input autoFocus required value={form.item} placeholder="例如：船資、門票、採買或住宿" onChange={(e) => setForm({ ...form, item: e.target.value })} /></label><label>金額<input required min="0" type="number" inputMode="decimal" value={form.amount || ""} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} /></label><label>幣別<select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}><option>RM</option><option>TWD</option><option>USD</option></select></label><label>付款人<input placeholder="姓名／代墊" value={form.payer} onChange={(e) => setForm({ ...form, payer: e.target.value })} /></label><label className="wide">備註<input placeholder="分攤方式、收據位置等" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></label></div><div className="modal-actions">{draft.id && <button className="delete-button modal-delete" onClick={() => onDelete(draft.id!)}>刪除費用</button>}<button className="ghost-button" onClick={onClose}>取消</button><button className="primary-button" disabled={!valid} onClick={() => valid && onSave(form)}>保存費用</button></div></div></div>;
+}
+
 function ItemEditor({ date, item, onClose, onSave }: { date: string; item?: ScheduleItem; onClose: () => void; onSave: (item: ScheduleItem) => void }) {
-  const [draft, setDraft] = useState<ScheduleItem>(item ?? { id: crypto.randomUUID(), time: "", title: "", location: "", note: "", status: "planned" });
+  const [draft, setDraft] = useState<ScheduleItem>(item ?? { id: crypto.randomUUID(), time: "", title: "", location: "", note: "", locked: false, status: "planned" });
   return <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="編輯行程"><div className="modal-card"><div className="modal-head"><div><span className="eyebrow">EDIT DAY · {formatDate(date)}</span><h3>{item ? "現場修訂行程" : "加入臨時項目"}</h3></div><button className="close-button" onClick={onClose}>×</button></div><div className="form-grid"><label>時間<input value={draft.time} placeholder="例如 15:30" onChange={(e) => setDraft({ ...draft, time: e.target.value })} /></label><label className="wide">項目<input autoFocus value={draft.title} placeholder="項目名稱" onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label><label className="wide">地點<input value={draft.location ?? ""} placeholder="可留白" onChange={(e) => setDraft({ ...draft, location: e.target.value })} /></label><label className="wide">備註／現場變動<textarea rows={4} value={draft.note ?? ""} placeholder="把臨時決定、交通狀況或待確認事項寫在這裡" onChange={(e) => setDraft({ ...draft, note: e.target.value })} /></label></div><div className="modal-actions"><button className="ghost-button" onClick={onClose}>取消</button><button className="primary-button" onClick={() => draft.title.trim() && onSave(draft)}>保存修訂</button></div></div></div>;
 }
 

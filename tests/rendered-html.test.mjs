@@ -37,8 +37,17 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(page, /田野記錄/);
   assert.match(page, /匯出 CSV/);
   assert.match(page, /localStorage/);
+  assert.match(page, /itemId/);
+  assert.match(page, /expense-link/);
+  assert.match(page, /ExpenseEditor/);
+  assert.match(page, /固定資訊/);
   assert.match(data, /Swak Ali/);
   assert.match(data, /Ba Ole/);
+  assert.match(data, /AK1511/);
+  assert.match(data, /MH3251/);
+  assert.match(data, /AK1510/);
+  assert.match(data, /locked/);
+  assert.match(data, /details/);
   assert.match(layout, /themeColor/);
   assert.match(manifest, /standalone/);
   assert.match(serviceWorker, /rainforest-journal-v2/);
