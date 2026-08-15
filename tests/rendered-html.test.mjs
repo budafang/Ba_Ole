@@ -62,6 +62,9 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(page, /baseItem\.info\) mergedItem\.info/);
   assert.match(data, /約 3 公里木棧道/);
   assert.match(data, /Batu Bungan 本南族村落/);
+  assert.match(data, /Bat Exodus/);
+  assert.match(data, /離洞口約 100 公尺處的蝙蝠觀測台/);
+  assert.match(data, /超過 300 萬隻皺唇蝙蝠/);
   assert.match(page, /day-summary-link/);
   assert.doesNotMatch(page, /check-button|標記完成/);
   assert.match(page, /公費總計/);
