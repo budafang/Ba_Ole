@@ -158,6 +158,8 @@ p { color: var(--muted); font-size: 13px; line-height: 1.75; }
 .date-label { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
 .day-panel-top h3 { max-width: 620px; font-size: clamp(31px, 5vw, 44px); line-height: 1.08; margin: 0 0 10px; }
 .day-panel-top p { margin-bottom: 0; max-width: 600px; font-size: 14px; }
+.day-summary-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 12px; color: var(--deep); font-size: 12px; font-weight: 800; text-decoration: none; border-bottom: 1px solid #b8ccb9; padding-bottom: 2px; transition: color .16s ease, border-color .16s ease; }
+.day-summary-link:hover { color: var(--ink); border-color: var(--ink); }
 .add-button { color: var(--deep); border-color: #bdcdbd; background: transparent; }
 .schedule-list { display: flex; flex-direction: column; gap: 0; padding: 0; border-top: 1px solid var(--line); }
 .schedule-item {

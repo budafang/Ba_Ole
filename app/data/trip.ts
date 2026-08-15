@@ -18,6 +18,7 @@ export type TripDay = {
   area: string;
   title: string;
   summary: string;
+  summaryLink?: { label: string; href: string };
   items: ScheduleItem[];
 };
 
@@ -77,9 +78,10 @@ export const tripDays: TripDay[] = [
     area: "Mulu",
     title: "飛往 Mulu",
     summary: "早上退房、報到並前往 Mulu，下午走訪藍洞、鹿洞與蝙蝠出洞。",
+    summaryLink: { label: "查看 Mulu 國家公園導覽圖", href: "/mulu-national-park-map.jpg" },
     items: [
-      { id: "d20-1", time: "07:00", title: "飯店退房、前往機場", location: "Cotton Houz → BKI", note: "10 人搭 3 部車；抵達機場後先 check in，機場內麥當勞早餐預算約 RM20。", locked: true, status: "planned" },
-      { id: "d20-2", time: "07:30", title: "機場報到", location: "亞庇國際機場 BKI", locked: true, status: "planned" },
+      { id: "d20-1", time: "08:30", title: "Cotton Houz check out、前往機場", location: "Cotton Houz → BKI", note: "早餐在飯店外自行解決；08:30 check out，09:00 抵達機場。", locked: true, status: "planned" },
+      { id: "d20-2", time: "09:00", title: "抵達機場、辦理報到", location: "亞庇國際機場 BKI", note: "抵達後先 check in，預留時間整理行李。", locked: true, status: "planned" },
       { id: "d20-3", time: "10:55–11:50", title: "馬航 MH3251", location: "BKI → MZV", note: "亞庇 BKI 10:55 起飛；Mulu MZV 11:50 抵達。", locked: true, status: "planned" },
       { id: "d20-4", time: "抵達後", title: "MZV → Mulu 國家公園", location: "約 1.5 公里", note: "叫計程車前往國家公園；車資約 RM5／人，遊客中心可裝飲用水。", status: "planned" },
       { id: "d20-5", time: "14:00–18:30", title: "藍洞 × 鹿洞 × 蝙蝠出洞", location: "Mulu National Park", note: "活動費約 $35；步行約 3 公里。", info: { details: ["藍洞 Lang Cave × 鹿洞 Deer Cave", "鹿洞通道有林肯總統側面剪影", "傍晚在露天看台觀賞蝙蝠群飛出洞穴"], links: [{ title: "Mulu 洞穴與蝙蝠出洞旅遊筆記", href: "https://www.moganddogtravels.com/blogs/visiting-mulu-national-park" }] }, status: "planned" },
@@ -91,6 +93,7 @@ export const tripDays: TripDay[] = [
     area: "Mulu",
     title: "乘船探險日",
     summary: "傳統長舟、風洞、清水洞地下河與夜間野生動物尋蹤。",
+    summaryLink: { label: "查看 Mulu 國家公園導覽圖", href: "/mulu-national-park-map.jpg" },
     items: [
       { id: "d21-1", time: "08:30–12:30", title: "傳統長舟 × 風洞 × 清水洞", location: "Mulu National Park", note: "活動費約 $70；中午在清水洞野餐與暢泳。", info: { details: ["風洞 Wind Cave × 清水洞 Clearwater Cave 地下河游泳"], links: [{ title: "Clearwater Cave 介紹", href: "https://mulucaves.org.uk/the-caves-2/caves-of-gunung-api/clearwater-cave" }] }, status: "planned" },
       { id: "d21-2", time: "19:30–21:30", title: "夜間野生動物尋蹤", location: "Mulu", note: "Night Walk；活動費約 $45。由 Bateu Bungan 頭目的兒子 John 帶領夜觀。", status: "planned" },

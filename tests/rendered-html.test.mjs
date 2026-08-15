@@ -59,6 +59,7 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(page, /data-schedule-id/);
   assert.match(page, /onPointerMove/);
   assert.match(page, /event\.stopPropagation\(\); startPress/);
+  assert.match(page, /day-summary-link/);
   assert.doesNotMatch(page, /check-button|標記完成/);
   assert.match(page, /公費總計/);
   assert.match(page, /自費總計/);
@@ -68,6 +69,9 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(data, /AK1511/);
   assert.match(data, /MH3251/);
   assert.match(data, /AK1510/);
+  assert.match(data, /mulu-national-park-map\.jpg/);
+  assert.match(data, /08:30/);
+  assert.match(data, /09:00/);
   assert.match(data, /locked/);
   assert.match(data, /personalGear/);
   assert.match(data, /Clearwater Cave/);
