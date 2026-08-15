@@ -84,7 +84,7 @@ export const tripDays: TripDay[] = [
       { id: "d20-2", time: "09:00", title: "抵達機場、辦理報到", location: "亞庇國際機場 BKI", note: "抵達後先 check in，預留時間整理行李。", locked: true, status: "planned" },
       { id: "d20-3", time: "10:55–11:50", title: "馬航 MH3251", location: "BKI → MZV", note: "亞庇 BKI 10:55 起飛；Mulu MZV 11:50 抵達。", locked: true, status: "planned" },
       { id: "d20-4", time: "抵達後", title: "MZV → Mulu 國家公園", location: "約 1.5 公里", note: "叫計程車前往國家公園；車資約 RM5／人，遊客中心可裝飲用水。", status: "planned" },
-      { id: "d20-5", time: "14:00–18:30", title: "藍洞 × 鹿洞 × 蝙蝠出洞", location: "Mulu National Park", note: "活動費約 $35；步行約 3 公里。", info: { details: ["藍洞 Lang Cave × 鹿洞 Deer Cave", "鹿洞通道有林肯總統側面剪影", "傍晚在露天看台觀賞蝙蝠群飛出洞穴"], links: [{ title: "Mulu 洞穴與蝙蝠出洞旅遊筆記", href: "https://www.moganddogtravels.com/blogs/visiting-mulu-national-park" }] }, status: "planned" },
+      { id: "d20-5", time: "14:00–18:30", title: "藍洞 × 鹿洞 × 蝙蝠出洞", location: "Mulu National Park", note: "活動費約 $35；步行約 3 公里。", info: { details: ["藍洞 Lang Cave × 鹿洞 Deer Cave", "鹿洞通道有林肯總統側面剪影", "傍晚在露天看台觀賞蝙蝠群飛出洞穴"], links: [{ title: "鹿洞中文補充資訊", href: "https://melissalin510.pixnet.net/blog/posts/15347003365" }] }, status: "planned" },
     ],
   },
   {
@@ -95,7 +95,7 @@ export const tripDays: TripDay[] = [
     summary: "傳統長舟、風洞、清水洞地下河與夜間野生動物尋蹤。",
     summaryLink: { label: "查看 Mulu 國家公園導覽圖", href: "/mulu-national-park-map.jpg" },
     items: [
-      { id: "d21-1", time: "08:30–12:30", title: "傳統長舟 × 風洞 × 清水洞", location: "Mulu National Park", note: "活動費約 $70；中午在清水洞野餐與暢泳。", info: { details: ["風洞 Wind Cave × 清水洞 Clearwater Cave 地下河游泳"], links: [{ title: "Clearwater Cave 介紹", href: "https://mulucaves.org.uk/the-caves-2/caves-of-gunung-api/clearwater-cave" }] }, status: "planned" },
+      { id: "d21-1", time: "08:30–12:30", title: "傳統長舟 × 風洞 × 清水洞", location: "Mulu National Park", note: "活動費約 $70；中午在清水洞野餐與暢泳。", info: { details: ["風洞 Wind Cave × 清水洞 Clearwater Cave 地下河游泳"], links: [{ title: "Clearwater Cave 中文補充資訊", href: "https://cxeltonlee.pixnet.net/blog/posts/12222281094" }] }, status: "planned" },
       { id: "d21-2", time: "19:30–21:30", title: "夜間野生動物尋蹤", location: "Mulu", note: "Night Walk；活動費約 $45。由 Bateu Bungan 頭目的兒子 John 帶領夜觀。", status: "planned" },
     ],
   },
@@ -117,6 +117,7 @@ export const tripDays: TripDay[] = [
     area: "Swak Ali",
     title: "進入 Swak Ali",
     summary: "與翻譯會面、採買糧食，下午安裝太陽能，晚上捐贈。",
+    summaryLink: { label: "觀看去年雨林服務短片", href: "https://youtu.be/rHyBRh0og0A?si=MieYauI1udF84Ilb" },
     items: [
       { id: "d23-1", time: "上午", title: "Miri → Swak Ali", location: "Swak Ali", note: "預計 5 台車；途中採買物資並與翻譯會面。", status: "planned" },
       { id: "d23-2", time: "下午", title: "太陽能系統安裝", location: "Swak Ali", note: "1.62 kW；保留現場調整空間。", status: "planned" },

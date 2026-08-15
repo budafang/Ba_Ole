@@ -75,6 +75,9 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(data, /locked/);
   assert.match(data, /personalGear/);
   assert.match(data, /Clearwater Cave/);
+  assert.match(data, /melissalin510\.pixnet\.net\/blog\/posts\/15347003365/);
+  assert.match(data, /cxeltonlee\.pixnet\.net\/blog\/posts\/12222281094/);
+  assert.match(data, /rHyBRh0og0A/);
   assert.doesNotMatch(data, /PPT 標示|PPT 標示 TBD|住宿資料依 PPT/);
   assert.match(layout, /themeColor/);
   assert.match(styles, /touch-action: none/);
