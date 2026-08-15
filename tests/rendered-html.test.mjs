@@ -59,8 +59,9 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(page, /data-schedule-id/);
   assert.match(page, /onPointerMove/);
   assert.match(page, /event\.stopPropagation\(\); startPress/);
-  assert.match(page, /baseItem\.info\?\.links\?\.length/);
-  assert.match(page, /links: baseItem\.info\.links/);
+  assert.match(page, /baseItem\.info\) mergedItem\.info/);
+  assert.match(data, /約 3 公里木棧道/);
+  assert.match(data, /Batu Bungan 本南族村落/);
   assert.match(page, /day-summary-link/);
   assert.doesNotMatch(page, /check-button|標記完成/);
   assert.match(page, /公費總計/);

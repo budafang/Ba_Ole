@@ -84,7 +84,7 @@ export const tripDays: TripDay[] = [
       { id: "d20-2", time: "09:00", title: "抵達機場、辦理報到", location: "亞庇國際機場 BKI", note: "抵達後先 check in，預留時間整理行李。", locked: true, status: "planned" },
       { id: "d20-3", time: "10:55–11:50", title: "馬航 MH3251", location: "BKI → MZV", note: "亞庇 BKI 10:55 起飛；Mulu MZV 11:50 抵達。", locked: true, status: "planned" },
       { id: "d20-4", time: "抵達後", title: "MZV → Mulu 國家公園", location: "約 1.5 公里", note: "叫計程車前往國家公園；車資約 RM5／人，遊客中心可裝飲用水。", status: "planned" },
-      { id: "d20-5", time: "14:00–18:30", title: "藍洞 × 鹿洞 × 蝙蝠出洞", location: "Mulu National Park", note: "活動費約 $35；步行約 3 公里。", info: { details: ["藍洞 Lang Cave × 鹿洞 Deer Cave", "鹿洞通道有林肯總統側面剪影", "傍晚在露天看台觀賞蝙蝠群飛出洞穴"], links: [{ title: "鹿洞中文補充資訊", href: "https://melissalin510.pixnet.net/blog/posts/15347003365" }] }, status: "planned" },
+      { id: "d20-5", time: "14:00–18:30", title: "藍洞 × 鹿洞 × 蝙蝠出洞", location: "Mulu National Park", note: "活動費 $35；約 3 公里木棧道 → 藍洞鐘乳石 → 鹿洞巨大通道 → 約 17:30 蝙蝠出洞。", info: { details: ["公園總部出發，先走約 3 公里平緩木棧道；沿途可觀察 50–70 公尺巨木、板根與奇特昆蟲。", "藍洞 Lang Cave：精緻密集的鐘乳石、石筍與石柱；特定角度可見林肯總統側面輪廓。", "鹿洞 Deer Cave：入口約寬 170 公尺、高 120 公尺；可深入 Garden of Eden，欣賞天坑與天然瀑布。", "蝙蝠觀測台：若無大雨，約 17:30 可觀賞數百萬隻蝙蝠集體出洞。"], links: [{ title: "鹿洞中文補充資訊", href: "https://melissalin510.pixnet.net/blog/posts/15347003365" }] }, status: "planned" },
     ],
   },
   {
@@ -95,8 +95,8 @@ export const tripDays: TripDay[] = [
     summary: "傳統長舟、風洞、清水洞地下河與夜間野生動物尋蹤。",
     summaryLink: { label: "查看 Mulu 國家公園導覽圖", href: "/mulu-national-park-map.jpg" },
     items: [
-      { id: "d21-1", time: "08:30–12:30", title: "傳統長舟 × 風洞 × 清水洞", location: "Mulu National Park", note: "活動費約 $70；中午在清水洞野餐與暢泳。", info: { details: ["風洞 Wind Cave × 清水洞 Clearwater Cave 地下河游泳"], links: [{ title: "Clearwater Cave 中文補充資訊", href: "https://cxeltonlee.pixnet.net/blog/posts/12222281094" }] }, status: "planned" },
-      { id: "d21-2", time: "19:30–21:30", title: "夜間野生動物尋蹤", location: "Mulu", note: "Night Walk；活動費約 $45。由 Bateu Bungan 頭目的兒子 John 帶領夜觀。", status: "planned" },
+      { id: "d21-1", time: "08:30–12:30", title: "傳統長舟 × 風洞 × 清水洞", location: "Mulu National Park", note: "活動費 $70；長舟逆流 → Batu Bungan 本南族村落 → 風洞 → 清水洞 200 階木梯 → 午休游泳。", info: { details: ["從公園總部碼頭搭傳統長舟逆流而上；途中通常停靠 Batu Bungan 本南族村落，可看手工藝與吹管文化。", "風洞 Wind Cave：洞口會感受到微風；King's Room 有對稱壯觀的鐘乳石與石筍。", "清水洞 Clearwater Cave：需攀登約 200 階木樓梯；地下河系統總長逾 200 公里。", "清水洞外有天然水晶游泳池與 Clearwater Picnic Area，可游泳、野餐後搭長舟返回。"], links: [{ title: "Clearwater Cave 中文補充資訊", href: "https://cxeltonlee.pixnet.net/blog/posts/12222281094" }] }, status: "planned" },
+      { id: "d21-2", time: "19:30–21:30", title: "夜間野生動物尋蹤", location: "Mulu", note: "含接送、活動費 $45；由 Batu Bungan 村落頭目的兒子 John 帶領夜間觀察。", status: "planned" },
     ],
   },
   {

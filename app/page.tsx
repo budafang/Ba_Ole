@@ -53,7 +53,7 @@ function mergeStoredDays(stored: TripDay[] | null) {
       if (!baseItem) return savedItem;
       if (baseItem.locked) return { ...baseItem, status: savedItem.status ?? baseItem.status };
       const mergedItem = { ...baseItem, ...savedItem };
-      if (baseItem.info?.links?.length) mergedItem.info = { ...mergedItem.info, links: baseItem.info.links };
+      if (baseItem.info) mergedItem.info = { ...mergedItem.info, ...baseItem.info, links: baseItem.info.links };
       return mergedItem;
     });
     const newBaseItems = baseDay.items.filter((item) => !savedItems.some((savedItem) => savedItem.id === item.id));
