@@ -322,10 +322,10 @@ function ScheduleView({ days, selectedDate, selectedDay, expenses, fieldNotes, o
 
   return <>
     <div className="day-picker schedule-day-picker" role="list" aria-label="選擇日期">
-      {days.map((day) => <button key={day.date} className={day.date === selectedDate ? "day-chip selected" : "day-chip"} onClick={() => onSelectDate(day.date)}><small>{day.weekday}</small><strong>{formatDate(day.date)}</strong><span>{day.area}</span></button>)}
+      {days.map((day, index) => <button key={day.date} className={day.date === selectedDate ? "day-chip selected" : "day-chip"} onClick={() => onSelectDate(day.date)}><small>DAY {String(index + 1).padStart(2, "0")}</small><strong>{formatDate(day.date)}</strong><span>{day.area}</span></button>)}
     </div>
     <section className="day-panel">
-      <div className="day-panel-top"><div><span className="date-label">{selectedDay.weekday} · {formatDate(selectedDay.date)} · {selectedDay.area}</span><h3>{selectedDay.title}</h3><p>{selectedDay.summary}</p></div><button className="add-button" onClick={onAdd}>＋ 新增行程</button></div>
+      <div className="day-panel-top"><div><div className="day-heading-meta"><span className="day-number">DAY {String(days.findIndex((day) => day.date === selectedDay.date) + 1).padStart(2, "0")}</span><span className="date-label">{selectedDay.weekday} · {formatDate(selectedDay.date)} · {selectedDay.area}</span></div><h3>{selectedDay.title}</h3><p>{selectedDay.summary}</p></div><button className="add-button" onClick={onAdd}>＋ 新增行程</button></div>
       <div className="schedule-list">{selectedDay.items.map((item) => { const itemFieldNotes = fieldNotes.filter((note) => note.itemId === item.id); return <article className={`schedule-item ${draggingId === item.id ? "dragging" : ""}`} key={item.id} data-schedule-id={item.id} onPointerDown={(event) => startPress(event, item.id)} onPointerMove={movePress} onPointerUp={endPress} onPointerCancel={endPress} onClickCapture={(event) => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); } }}>
         <button type="button" className="drag-handle" aria-label={`移動${item.title}，可用上下方向鍵`} onPointerDown={(event) => { event.stopPropagation(); startPress(event, item.id); }} onContextMenu={(event) => event.preventDefault()} onKeyDown={(event) => { if (event.key === "ArrowUp" || event.key === "ArrowDown") { event.preventDefault(); moveWithKeyboard(item.id, event.key === "ArrowUp" ? -1 : 1); } }}>⠿</button>
         <div className="schedule-time">{item.time}</div>
