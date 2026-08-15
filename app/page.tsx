@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cultureImages, cultureResources, tripDays, tripNotes, type ScheduleItem, type TripDay } from "./data/trip";
+import { cultureImages, cultureResources, personalGear, tripDays, tripNotes, type ScheduleItem, type TripDay } from "./data/trip";
 
 type Tab = "schedule" | "expenses" | "field" | "culture";
 type Funding = "公費" | "自費";
@@ -125,8 +125,6 @@ export default function Home() {
   useEffect(() => { if (storageReady) window.localStorage.setItem("swak-ali-field-notes", JSON.stringify(fieldNotes)); }, [fieldNotes, storageReady]);
 
   const selectedDay = days.find((day) => day.date === selectedDate) ?? days[0];
-  const completedItems = days.flatMap((day) => day.items).filter((item) => item.status === "done").length;
-  const allItems = days.flatMap((day) => day.items).length;
   function updateItem(date: string, next: ScheduleItem) {
     setDays((current) => current.map((day) => day.date !== date ? day : { ...day, items: day.items.map((item) => item.id === next.id ? next : item) }));
   }
@@ -219,7 +217,7 @@ export default function Home() {
       </section>
 
       <div className="main-content">
-        {tab === "schedule" && <ScheduleView days={days} selectedDate={selectedDate} selectedDay={selectedDay} expenses={expenses} completedItems={completedItems} allItems={allItems} onSelectDate={(date) => { setSelectedDate(date); setExpenseForm((current) => ({ ...current, date })); setFieldForm((current) => ({ ...current, date })); setEditingItem(null); setViewingItem(null); }} onEdit={(item) => setEditingItem({ date: selectedDate, item })} onInfo={(item) => setViewingItem({ date: selectedDate, item })} onStatus={(item) => updateItem(selectedDate, { ...item, status: item.status === "done" ? "planned" : "done" })} onExpense={openItemExpense} onReorder={(activeId, overId) => reorderItem(selectedDate, activeId, overId)} onAdd={() => setIsAddingItem(true)} />}
+        {tab === "schedule" && <ScheduleView days={days} selectedDate={selectedDate} selectedDay={selectedDay} expenses={expenses} onSelectDate={(date) => { setSelectedDate(date); setExpenseForm((current) => ({ ...current, date })); setFieldForm((current) => ({ ...current, date })); setEditingItem(null); setViewingItem(null); }} onEdit={(item) => setEditingItem({ date: selectedDate, item })} onInfo={(item) => setViewingItem({ date: selectedDate, item })} onExpense={openItemExpense} onReorder={(activeId, overId) => reorderItem(selectedDate, activeId, overId)} onAdd={() => setIsAddingItem(true)} />}
         {tab === "expenses" && <ExpensesView expenses={expenses} form={expenseForm} setForm={setExpenseForm} onSave={saveExpense} onEdit={(expense) => setExpenseEditor(expense)} onExport={exportAll} />}
         {tab === "field" && <FieldView notes={fieldNotes} form={fieldForm} setForm={setFieldForm} onSave={saveFieldNote} onExport={exportFieldNotes} onDelete={(id) => setFieldNotes((current) => current.filter((note) => note.id !== id))} />}
         {tab === "culture" && <CultureView />}
@@ -240,7 +238,7 @@ export default function Home() {
   );
 }
 
-function ScheduleView({ days, selectedDate, selectedDay, expenses, completedItems, allItems, onSelectDate, onEdit, onInfo, onStatus, onExpense, onReorder, onAdd }: { days: TripDay[]; selectedDate: string; selectedDay: TripDay; expenses: Expense[]; completedItems: number; allItems: number; onSelectDate: (date: string) => void; onEdit: (item: ScheduleItem) => void; onInfo: (item: ScheduleItem) => void; onStatus: (item: ScheduleItem) => void; onExpense: (date: string, item: ScheduleItem) => void; onReorder: (activeId: string, overId: string) => void; onAdd: () => void }) {
+function ScheduleView({ days, selectedDate, selectedDay, expenses, onSelectDate, onEdit, onInfo, onExpense, onReorder, onAdd }: { days: TripDay[]; selectedDate: string; selectedDay: TripDay; expenses: Expense[]; onSelectDate: (date: string) => void; onEdit: (item: ScheduleItem) => void; onInfo: (item: ScheduleItem) => void; onExpense: (date: string, item: ScheduleItem) => void; onReorder: (activeId: string, overId: string) => void; onAdd: () => void }) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const pressTimer = useRef<number | null>(null);
   const dragId = useRef<string | null>(null);
@@ -253,7 +251,7 @@ function ScheduleView({ days, selectedDate, selectedDay, expenses, completedItem
   }
 
   function startPress(event: React.PointerEvent<HTMLElement>, itemId: string) {
-    if ((event.target as HTMLElement).closest(".check-button, .schedule-actions")) return;
+    if ((event.target as HTMLElement).closest(".schedule-actions, .drag-handle, .info-link")) return;
     cancelPress();
     pointerStart.current = { x: event.clientX, y: event.clientY };
     const card = event.currentTarget;
@@ -293,23 +291,26 @@ function ScheduleView({ days, selectedDate, selectedDay, expenses, completedItem
 
   return <>
     <section className="section-heading"><div><p className="eyebrow">FIELD ITINERARY</p><h2>每日行程</h2><p className="section-lede">選擇日期，直接查看、修訂或記錄費用。</p></div><button className="ghost-button" onClick={() => download("swak-ali-itinerary.json", JSON.stringify(days, null, 2))}>匯出</button></section>
-    <div className="schedule-status"><div className="progress-track"><span style={{ width: `${allItems ? (completedItems / allItems) * 100 : 0}%` }} /></div><small>{completedItems}/{allItems} 項完成</small></div>
     <div className="day-picker" role="list" aria-label="選擇日期">
       {days.map((day) => <button key={day.date} className={day.date === selectedDate ? "day-chip selected" : "day-chip"} onClick={() => onSelectDate(day.date)}><small>{day.weekday}</small><strong>{formatDate(day.date)}</strong><span>{day.area}</span></button>)}
     </div>
+    <GearMenu />
     <section className="day-panel">
       <div className="day-panel-top"><div><span className="date-label">{selectedDay.weekday} · {formatDate(selectedDay.date)} · {selectedDay.area}</span><h3>{selectedDay.title}</h3><p>{selectedDay.summary}</p></div><button className="add-button" onClick={onAdd}>＋ 新增行程</button></div>
-      <div className="schedule-list">{selectedDay.items.map((item) => <article className={`schedule-item ${item.status} ${draggingId === item.id ? "dragging" : ""}`} key={item.id} data-schedule-id={item.id} onPointerDown={(event) => startPress(event, item.id)} onPointerMove={movePress} onPointerUp={endPress} onPointerCancel={endPress} onClickCapture={(event) => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); } }}>
-        <button className="check-button" aria-label={`${item.title}標記完成`} onClick={() => onStatus(item)}>{item.status === "done" ? "✓" : ""}</button>
+      <div className="schedule-list">{selectedDay.items.map((item) => <article className={`schedule-item ${draggingId === item.id ? "dragging" : ""}`} key={item.id} data-schedule-id={item.id} onPointerDown={(event) => startPress(event, item.id)} onPointerMove={movePress} onPointerUp={endPress} onPointerCancel={endPress} onClickCapture={(event) => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); } }}>
         <div className="schedule-time">{item.time}</div>
-        {item.note || item.details?.length ? <button className="schedule-detail schedule-detail-button" onClick={() => onInfo(item)}><h4>{item.title}</h4>{item.location && <p className="location">↳ {item.location}</p>}<span className="info-link">查看資訊 ›</span></button> : <div className="schedule-detail"><h4>{item.title}</h4>{item.location && <p className="location">↳ {item.location}</p>}</div>}
+        <div className="schedule-detail"><h4>{item.title}</h4>{item.location && <p className="location">↳ {item.location}</p>}{item.note && <p className="schedule-note">{item.note}</p>}{item.info && <button className="info-link" onClick={() => onInfo(item)}>查看補充資訊 ›</button>}</div>
         <div className="schedule-actions"><button className="expense-link" onClick={() => onExpense(selectedDate, item)} aria-label={`${item.title}新增或編輯費用`}>{expenseSummary(expenses.find((expense) => expense.itemId === item.id))}</button>{item.locked ? <span className="fixed-label">固定</span> : <button className="edit-link" onClick={() => onEdit(item)}>編輯</button>}</div>
         <button className="drag-handle" aria-label={`移動${item.title}，可用上下方向鍵`} onPointerDown={(event) => startPress(event, item.id)} onKeyDown={(event) => { if (event.key === "ArrowUp" || event.key === "ArrowDown") { event.preventDefault(); moveWithKeyboard(item.id, event.key === "ArrowUp" ? -1 : 1); } }}>⠿</button>
       </article>)}</div>
-      <div className="schedule-legend"><span><i />長按行程卡可拖曳排序</span><span>點「查看資訊」看補充內容</span></div>
+      <div className="schedule-legend"><span><i />長按行程卡可拖曳排序</span><span>景點有補充資料時可查看</span></div>
     </section>
     <details className="trip-briefing"><summary>行前提醒與重要資料</summary><ul>{tripNotes.map((note) => <li key={note}>{note}</li>)}</ul></details>
   </>;
+}
+
+function GearMenu() {
+  return <details className="gear-menu"><summary><span><b>個人裝備</b><small>出發前逐項確認</small></span><strong>{personalGear.length} 項</strong></summary><div className="gear-list">{personalGear.map((gear, index) => <div className="gear-row" key={gear.id}><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{gear.item}</strong>{gear.note && <small>{gear.note}</small>}</div></div>)}</div></details>;
 }
 
 const expenseColors: Record<string, string> = { 交通: "#5f8c72", 住宿: "#e3a47f", 採買: "#e8c96f", 餐飲: "#93b889", 活動: "#7fa9a1", 其他: "#b6aa9d" };
@@ -371,7 +372,7 @@ function CultureView() {
 }
 
 function ItemInfo({ date, item, onClose }: { date: string; item: ScheduleItem; onClose: () => void }) {
-  return <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={`${item.title}旅遊資訊`}><div className="modal-card info-modal-card"><div className="modal-head"><div><span className="eyebrow">TRAVEL INFO · {formatDate(date)}</span><h3>{item.title}</h3>{item.time && <p className="modal-context">{item.time}{item.location ? ` · ${item.location}` : ""}</p>}</div><button className="close-button" onClick={onClose} aria-label="關閉">×</button></div>{item.note && <p className="info-note">{item.note}</p>}{item.details?.length ? <ul className="info-details">{item.details.map((detail) => <li key={detail}>{detail}</li>)}</ul> : <p className="info-empty">目前沒有其他補充資訊。</p>}<div className="modal-actions"><button className="primary-button" onClick={onClose}>知道了</button></div></div></div>;
+  return <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label={`${item.title}補充資訊`}><div className="modal-card info-modal-card"><div className="modal-head"><div><span className="eyebrow">TRAVEL INFO · {formatDate(date)}</span><h3>{item.title}</h3>{item.time && <p className="modal-context">{item.time}{item.location ? ` · ${item.location}` : ""}</p>}</div><button className="close-button" onClick={onClose} aria-label="關閉">×</button></div>{item.info?.details.length ? <ul className="info-details">{item.info.details.map((detail) => <li key={detail}>{detail}</li>)}</ul> : <p className="info-empty">目前沒有其他補充資訊。</p>}{item.info?.links?.length ? <div className="info-links">{item.info.links.map((link) => <a href={link.href} target="_blank" rel="noreferrer" key={link.href}>{link.title} ↗</a>)}</div> : null}<div className="modal-actions"><button className="primary-button" onClick={onClose}>知道了</button></div></div></div>;
 }
 
 function ExpenseEditor({ draft, onClose, onSave, onDelete }: { draft: ExpenseDraft; onClose: () => void; onSave: (draft: ExpenseDraft) => void; onDelete: (id: string) => void }) {

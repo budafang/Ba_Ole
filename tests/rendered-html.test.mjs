@@ -42,8 +42,10 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(page, /expense-link/);
   assert.match(page, /ExpenseEditor/);
   assert.match(page, /ItemInfo/);
+  assert.match(page, /個人裝備/);
   assert.match(page, /data-schedule-id/);
   assert.match(page, /onPointerMove/);
+  assert.doesNotMatch(page, /check-button|標記完成/);
   assert.match(page, /公費總計/);
   assert.match(page, /自費總計/);
   assert.match(page, /conic-gradient/);
@@ -53,7 +55,9 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(data, /MH3251/);
   assert.match(data, /AK1510/);
   assert.match(data, /locked/);
-  assert.match(data, /details/);
+  assert.match(data, /personalGear/);
+  assert.match(data, /Clearwater Cave/);
+  assert.doesNotMatch(data, /PPT 標示|PPT 標示 TBD|住宿資料依 PPT/);
   assert.match(layout, /themeColor/);
   assert.match(styles, /touch-action: none/);
   assert.match(styles, /input, select, textarea \{ font-size: 16px; \}/);
