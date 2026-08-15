@@ -78,6 +78,8 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(data, /mulu-national-park-map\.jpg/);
   assert.match(data, /08:30/);
   assert.match(data, /09:00/);
+  assert.match(data, /14:15–18:30/);
+  assert.match(data, /09:00–12:30/);
   assert.match(data, /locked/);
   assert.match(data, /personalGear/);
   assert.match(data, /Clearwater Cave/);
