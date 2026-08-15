@@ -43,6 +43,8 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(page, /ExpenseEditor/);
   assert.match(page, /ItemInfo/);
   assert.match(page, /個人裝備/);
+  assert.match(page, /個人裝備清單/);
+  assert.doesNotMatch(page, /行前提醒與重要資料|trip-briefing/);
   assert.match(page, /data-schedule-id/);
   assert.match(page, /onPointerMove/);
   assert.doesNotMatch(page, /check-button|標記完成/);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cultureImages, cultureResources, personalGear, tripDays, tripNotes, type ScheduleItem, type TripDay } from "./data/trip";
+import { cultureImages, cultureResources, personalGear, tripDays, type ScheduleItem, type TripDay } from "./data/trip";
 
 type Tab = "schedule" | "expenses" | "field" | "culture";
 type Funding = "公費" | "自費";
@@ -291,26 +291,25 @@ function ScheduleView({ days, selectedDate, selectedDay, expenses, onSelectDate,
 
   return <>
     <section className="section-heading"><div><p className="eyebrow">FIELD ITINERARY</p><h2>每日行程</h2><p className="section-lede">選擇日期，直接查看、修訂或記錄費用。</p></div><button className="ghost-button" onClick={() => download("swak-ali-itinerary.json", JSON.stringify(days, null, 2))}>匯出</button></section>
+    <GearMenu />
     <div className="day-picker" role="list" aria-label="選擇日期">
       {days.map((day) => <button key={day.date} className={day.date === selectedDate ? "day-chip selected" : "day-chip"} onClick={() => onSelectDate(day.date)}><small>{day.weekday}</small><strong>{formatDate(day.date)}</strong><span>{day.area}</span></button>)}
     </div>
-    <GearMenu />
     <section className="day-panel">
       <div className="day-panel-top"><div><span className="date-label">{selectedDay.weekday} · {formatDate(selectedDay.date)} · {selectedDay.area}</span><h3>{selectedDay.title}</h3><p>{selectedDay.summary}</p></div><button className="add-button" onClick={onAdd}>＋ 新增行程</button></div>
       <div className="schedule-list">{selectedDay.items.map((item) => <article className={`schedule-item ${draggingId === item.id ? "dragging" : ""}`} key={item.id} data-schedule-id={item.id} onPointerDown={(event) => startPress(event, item.id)} onPointerMove={movePress} onPointerUp={endPress} onPointerCancel={endPress} onClickCapture={(event) => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); } }}>
+        <button className="drag-handle" aria-label={`移動${item.title}，可用上下方向鍵`} onPointerDown={(event) => startPress(event, item.id)} onKeyDown={(event) => { if (event.key === "ArrowUp" || event.key === "ArrowDown") { event.preventDefault(); moveWithKeyboard(item.id, event.key === "ArrowUp" ? -1 : 1); } }}>⠿</button>
         <div className="schedule-time">{item.time}</div>
         <div className="schedule-detail"><h4>{item.title}</h4>{item.location && <p className="location">↳ {item.location}</p>}{item.note && <p className="schedule-note">{item.note}</p>}{item.info && <button className="info-link" onClick={() => onInfo(item)}>查看補充資訊 ›</button>}</div>
         <div className="schedule-actions"><button className="expense-link" onClick={() => onExpense(selectedDate, item)} aria-label={`${item.title}新增或編輯費用`}>{expenseSummary(expenses.find((expense) => expense.itemId === item.id))}</button>{item.locked ? <span className="fixed-label">固定</span> : <button className="edit-link" onClick={() => onEdit(item)}>編輯</button>}</div>
-        <button className="drag-handle" aria-label={`移動${item.title}，可用上下方向鍵`} onPointerDown={(event) => startPress(event, item.id)} onKeyDown={(event) => { if (event.key === "ArrowUp" || event.key === "ArrowDown") { event.preventDefault(); moveWithKeyboard(item.id, event.key === "ArrowUp" ? -1 : 1); } }}>⠿</button>
       </article>)}</div>
-      <div className="schedule-legend"><span><i />長按行程卡可拖曳排序</span><span>景點有補充資料時可查看</span></div>
+      <div className="schedule-legend"><span><i />長按左側把手可拖曳排序</span><span>景點有補充資料時可查看</span></div>
     </section>
-    <details className="trip-briefing"><summary>行前提醒與重要資料</summary><ul>{tripNotes.map((note) => <li key={note}>{note}</li>)}</ul></details>
   </>;
 }
 
 function GearMenu() {
-  return <details className="gear-menu"><summary><span><b>個人裝備</b><small>出發前逐項確認</small></span><strong>{personalGear.length} 項</strong></summary><div className="gear-list">{personalGear.map((gear, index) => <div className="gear-row" key={gear.id}><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{gear.item}</strong>{gear.note && <small>{gear.note}</small>}</div></div>)}</div></details>;
+  return <details className="gear-menu"><summary><span className="gear-menu-title"><span className="gear-menu-icon">✓</span><span><b>個人裝備清單</b><small>從 Excel 整理 · 出發前逐項確認</small></span></span><strong>{personalGear.length} 項 · 展開</strong></summary><div className="gear-list">{personalGear.map((gear, index) => <div className="gear-row" key={gear.id}><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{gear.item}</strong>{gear.note && <small>{gear.note}</small>}</div></div>)}</div></details>;
 }
 
 const expenseColors: Record<string, string> = { 交通: "#5f8c72", 住宿: "#e3a47f", 採買: "#e8c96f", 餐飲: "#93b889", 活動: "#7fa9a1", 其他: "#b6aa9d" };
