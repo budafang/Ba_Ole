@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cultureImages, cultureResources, personalGear, tripDays, type ScheduleItem, type TripDay } from "./data/trip";
+import { cultureImages, cultureResources, personalGear, tripDays, type GearItem, type ScheduleItem, type TripDay } from "./data/trip";
 
 type Tab = "schedule" | "expenses" | "field" | "gear" | "culture";
 type Funding = "公費" | "自費";
 type Expense = { id: string; date: string; category: string; funding: Funding; item: string; amount: number; currency: string; payer: string; note: string; itemId?: string };
 type StoredExpense = Omit<Expense, "funding"> & { funding?: Funding };
 type ExpenseDraft = Omit<Expense, "id"> & { id?: string };
-type FieldNote = { id: string; date: string; place: string; person: string; type: string; title: string; body: string; createdAt: string };
+type FieldNote = { id: string; date: string; place: string; person: string; type: string; title: string; body: string; createdAt: string; itemId?: string; itemTitle?: string };
+type FieldNoteDraft = Omit<FieldNote, "id" | "createdAt">;
 
 const emptyExpense: ExpenseDraft = { date: "2026-08-21", category: "交通", funding: "公費", item: "", amount: 0, currency: "RM", payer: "", note: "" };
-const emptyFieldNote: Omit<FieldNote, "id" | "createdAt"> = { date: "2026-08-26", place: "", person: "", type: "觀察", title: "", body: "" };
+const emptyFieldNote: FieldNoteDraft = { date: "2026-08-26", place: "", person: "", type: "觀察", title: "", body: "" };
 
 function readStored<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -79,8 +80,10 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState(tripDays[0].date);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [fieldNotes, setFieldNotes] = useState<FieldNote[]>([]);
+  const [gearItems, setGearItems] = useState<GearItem[]>(personalGear);
   const [expenseForm, setExpenseForm] = useState<ExpenseDraft>(emptyExpense);
   const [fieldForm, setFieldForm] = useState(emptyFieldNote);
+  const [fieldNoteEditor, setFieldNoteEditor] = useState<FieldNoteDraft | null>(null);
   const [editingItem, setEditingItem] = useState<{ date: string; item: ScheduleItem } | null>(null);
   const [viewingItem, setViewingItem] = useState<{ date: string; item: ScheduleItem } | null>(null);
   const [expenseEditor, setExpenseEditor] = useState<ExpenseDraft | null>(null);
@@ -94,6 +97,7 @@ export default function Home() {
       setDays(mergeStoredDays(readStored<TripDay[] | null>("swak-ali-days", null)));
       setExpenses(readStored<StoredExpense[]>("swak-ali-expenses", []).map((expense) => ({ ...expense, funding: expense.funding ?? "公費" })));
       setFieldNotes(readStored("swak-ali-field-notes", []));
+      setGearItems(readStored<GearItem[]>("swak-ali-gear", personalGear));
       setOnline(navigator.onLine);
       setStorageReady(true);
     }, 0);
@@ -123,6 +127,7 @@ export default function Home() {
   useEffect(() => { if (storageReady) window.localStorage.setItem("swak-ali-days", JSON.stringify(days)); }, [days, storageReady]);
   useEffect(() => { if (storageReady) window.localStorage.setItem("swak-ali-expenses", JSON.stringify(expenses)); }, [expenses, storageReady]);
   useEffect(() => { if (storageReady) window.localStorage.setItem("swak-ali-field-notes", JSON.stringify(fieldNotes)); }, [fieldNotes, storageReady]);
+  useEffect(() => { if (storageReady) window.localStorage.setItem("swak-ali-gear", JSON.stringify(gearItems)); }, [gearItems, storageReady]);
 
   const selectedDay = days.find((day) => day.date === selectedDate) ?? days[0];
   function updateItem(date: string, next: ScheduleItem) {
@@ -159,6 +164,10 @@ export default function Home() {
     });
   }
 
+  function openItemFieldNote(date: string, item: ScheduleItem) {
+    setFieldNoteEditor({ ...emptyFieldNote, date, place: item.location ?? selectedDay.area, title: item.title, itemId: item.id, itemTitle: item.title });
+  }
+
   function saveExpenseDraft(draft: ExpenseDraft) {
     if (!draft.item.trim() || !draft.amount) return;
     setExpenses((current) => draft.id
@@ -179,11 +188,30 @@ export default function Home() {
     setExpenseForm({ ...emptyExpense, date: selectedDate });
   }
 
+  function saveFieldNoteDraft(draft: FieldNoteDraft) {
+    if (!draft.title.trim() && !draft.body.trim()) return;
+    setFieldNotes((current) => [{ ...draft, id: crypto.randomUUID(), createdAt: new Date().toISOString() }, ...current]);
+    setFieldNoteEditor(null);
+  }
+
   function saveFieldNote(event: React.FormEvent) {
     event.preventDefault();
-    if (!fieldForm.title.trim() && !fieldForm.body.trim()) return;
-    setFieldNotes((current) => [{ ...fieldForm, id: crypto.randomUUID(), createdAt: new Date().toISOString() }, ...current]);
+    saveFieldNoteDraft(fieldForm);
     setFieldForm({ ...emptyFieldNote, date: selectedDate });
+  }
+
+  function toggleGear(id: string) {
+    setGearItems((current) => current.map((gear) => gear.id === id ? { ...gear, checked: !gear.checked } : gear));
+  }
+
+  function addGear(item: string) {
+    const value = item.trim();
+    if (!value) return;
+    setGearItems((current) => [...current, { id: `gear-${crypto.randomUUID()}`, item: value }]);
+  }
+
+  function deleteGear(id: string) {
+    setGearItems((current) => current.filter((gear) => gear.id !== id));
   }
 
   function exportAll() {
@@ -191,7 +219,7 @@ export default function Home() {
   }
 
   function exportFieldNotes() {
-    const rows = [["日期", "地點", "對象／關係人", "記錄類型", "標題", "內容", "建立時間"], ...fieldNotes.map((note) => [note.date, note.place, note.person, note.type, note.title, note.body, note.createdAt])];
+    const rows = [["日期", "地點", "行程", "對象／關係人", "記錄類型", "標題", "內容", "建立時間"], ...fieldNotes.map((note) => [note.date, note.place, note.itemTitle ?? "", note.person, note.type, note.title, note.body, note.createdAt])];
     download("swak-ali-field-notes.csv", `\uFEFF${rows.map((row) => row.map(csvEscape).join(",")).join("\n")}`, "text/csv;charset=utf-8");
   }
 
@@ -217,10 +245,10 @@ export default function Home() {
       </section>
 
       <div className="main-content">
-        {tab === "schedule" && <ScheduleView days={days} selectedDate={selectedDate} selectedDay={selectedDay} expenses={expenses} onSelectDate={(date) => { setSelectedDate(date); setExpenseForm((current) => ({ ...current, date })); setFieldForm((current) => ({ ...current, date })); setEditingItem(null); setViewingItem(null); }} onEdit={(item) => setEditingItem({ date: selectedDate, item })} onInfo={(item) => setViewingItem({ date: selectedDate, item })} onExpense={openItemExpense} onReorder={(activeId, overId) => reorderItem(selectedDate, activeId, overId)} onAdd={() => setIsAddingItem(true)} />}
+        {tab === "schedule" && <ScheduleView days={days} selectedDate={selectedDate} selectedDay={selectedDay} expenses={expenses} fieldNotes={fieldNotes} onSelectDate={(date) => { setSelectedDate(date); setExpenseForm((current) => ({ ...current, date })); setFieldForm((current) => ({ ...current, date })); setEditingItem(null); setViewingItem(null); }} onEdit={(item) => setEditingItem({ date: selectedDate, item })} onInfo={(item) => setViewingItem({ date: selectedDate, item })} onExpense={openItemExpense} onFieldNote={openItemFieldNote} onReorder={(activeId, overId) => reorderItem(selectedDate, activeId, overId)} onAdd={() => setIsAddingItem(true)} />}
         {tab === "expenses" && <ExpensesView expenses={expenses} form={expenseForm} setForm={setExpenseForm} onSave={saveExpense} onEdit={(expense) => setExpenseEditor(expense)} onExport={exportAll} />}
         {tab === "field" && <FieldView notes={fieldNotes} form={fieldForm} setForm={setFieldForm} onSave={saveFieldNote} onExport={exportFieldNotes} onDelete={(id) => setFieldNotes((current) => current.filter((note) => note.id !== id))} />}
-        {tab === "gear" && <GearView />}
+        {tab === "gear" && <GearView items={gearItems} onToggle={toggleGear} onAdd={addGear} onDelete={deleteGear} />}
         {tab === "culture" && <CultureView />}
       </div>
 
@@ -228,19 +256,20 @@ export default function Home() {
       {isAddingItem && <ItemEditor date={selectedDate} onClose={() => setIsAddingItem(false)} onSave={addItem} />}
       {viewingItem && <ItemInfo date={viewingItem.date} item={viewingItem.item} onClose={() => setViewingItem(null)} />}
       {expenseEditor && <ExpenseEditor draft={expenseEditor} onClose={() => setExpenseEditor(null)} onSave={saveExpenseDraft} onDelete={deleteExpense} />}
+      {fieldNoteEditor && <FieldNoteEditor draft={fieldNoteEditor} onClose={() => setFieldNoteEditor(null)} onSave={saveFieldNoteDraft} />}
 
       <nav className="bottom-nav" aria-label="主要功能">
         <NavButton active={tab === "schedule"} icon="▦" label="每日行程" onClick={() => setTab("schedule")} />
         <NavButton active={tab === "expenses"} icon="$" label="記帳" onClick={() => setTab("expenses")} />
         <NavButton active={tab === "field"} icon="✎" label="田調" onClick={() => setTab("field")} count={fieldNotes.length || undefined} />
-        <NavButton active={tab === "gear"} icon="✓" label="裝備" onClick={() => setTab("gear")} count={personalGear.length} />
+        <NavButton active={tab === "gear"} icon="✓" label="裝備" onClick={() => setTab("gear")} count={gearItems.length} />
         <NavButton active={tab === "culture"} icon="◌" label="More" onClick={() => setTab("culture")} />
       </nav>
     </main>
   );
 }
 
-function ScheduleView({ days, selectedDate, selectedDay, expenses, onSelectDate, onEdit, onInfo, onExpense, onReorder, onAdd }: { days: TripDay[]; selectedDate: string; selectedDay: TripDay; expenses: Expense[]; onSelectDate: (date: string) => void; onEdit: (item: ScheduleItem) => void; onInfo: (item: ScheduleItem) => void; onExpense: (date: string, item: ScheduleItem) => void; onReorder: (activeId: string, overId: string) => void; onAdd: () => void }) {
+function ScheduleView({ days, selectedDate, selectedDay, expenses, fieldNotes, onSelectDate, onEdit, onInfo, onExpense, onFieldNote, onReorder, onAdd }: { days: TripDay[]; selectedDate: string; selectedDay: TripDay; expenses: Expense[]; fieldNotes: FieldNote[]; onSelectDate: (date: string) => void; onEdit: (item: ScheduleItem) => void; onInfo: (item: ScheduleItem) => void; onExpense: (date: string, item: ScheduleItem) => void; onFieldNote: (date: string, item: ScheduleItem) => void; onReorder: (activeId: string, overId: string) => void; onAdd: () => void }) {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const pressTimer = useRef<number | null>(null);
   const dragId = useRef<string | null>(null);
@@ -297,21 +326,30 @@ function ScheduleView({ days, selectedDate, selectedDay, expenses, onSelectDate,
     </div>
     <section className="day-panel">
       <div className="day-panel-top"><div><span className="date-label">{selectedDay.weekday} · {formatDate(selectedDay.date)} · {selectedDay.area}</span><h3>{selectedDay.title}</h3><p>{selectedDay.summary}</p></div><button className="add-button" onClick={onAdd}>＋ 新增行程</button></div>
-      <div className="schedule-list">{selectedDay.items.map((item) => <article className={`schedule-item ${draggingId === item.id ? "dragging" : ""}`} key={item.id} data-schedule-id={item.id} onPointerDown={(event) => startPress(event, item.id)} onPointerMove={movePress} onPointerUp={endPress} onPointerCancel={endPress} onClickCapture={(event) => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); } }}>
+      <div className="schedule-list">{selectedDay.items.map((item) => { const itemFieldNotes = fieldNotes.filter((note) => note.itemId === item.id); return <article className={`schedule-item ${draggingId === item.id ? "dragging" : ""}`} key={item.id} data-schedule-id={item.id} onPointerDown={(event) => startPress(event, item.id)} onPointerMove={movePress} onPointerUp={endPress} onPointerCancel={endPress} onClickCapture={(event) => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); } }}>
         <button type="button" className="drag-handle" aria-label={`移動${item.title}，可用上下方向鍵`} onPointerDown={(event) => { event.stopPropagation(); startPress(event, item.id); }} onContextMenu={(event) => event.preventDefault()} onKeyDown={(event) => { if (event.key === "ArrowUp" || event.key === "ArrowDown") { event.preventDefault(); moveWithKeyboard(item.id, event.key === "ArrowUp" ? -1 : 1); } }}>⠿</button>
         <div className="schedule-time">{item.time}</div>
         <div className="schedule-detail"><h4>{item.title}</h4>{item.location && <p className="location">↳ {item.location}</p>}{item.note && <p className="schedule-note">{item.note}</p>}{item.info && <button className="info-link" onClick={() => onInfo(item)}>查看補充資訊 ›</button>}</div>
-        <div className="schedule-actions"><button className="expense-link" onClick={() => onExpense(selectedDate, item)} aria-label={`${item.title}新增或編輯費用`}>{expenseSummary(expenses.find((expense) => expense.itemId === item.id))}</button>{item.locked ? <span className="fixed-label">固定</span> : <button className="edit-link" onClick={() => onEdit(item)}>編輯</button>}</div>
-      </article>)}</div>
+        <div className="schedule-actions"><button className="expense-link" onClick={() => onExpense(selectedDate, item)} aria-label={`${item.title}新增或編輯費用`}>{expenseSummary(expenses.find((expense) => expense.itemId === item.id))}</button><button className="field-note-link" onClick={() => onFieldNote(selectedDate, item)} aria-label={`${item.title}新增田野筆記`}>{itemFieldNotes.length ? `田調 ${itemFieldNotes.length}` : "新增田調"}</button>{item.locked ? <span className="fixed-label">固定</span> : <button className="edit-link" onClick={() => onEdit(item)}>編輯</button>}</div>
+      </article>; })}</div>
       <div className="schedule-legend"><span><i />長按左側把手可拖曳排序</span><span>景點有補充資料時可查看</span></div>
     </section>
   </>;
 }
 
-function GearView() {
+function GearView({ items, onToggle, onAdd, onDelete }: { items: GearItem[]; onToggle: (id: string) => void; onAdd: (item: string) => void; onDelete: (id: string) => void }) {
+  const [draft, setDraft] = useState("");
+  const checkedCount = items.filter((gear) => gear.checked).length;
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault();
+    onAdd(draft);
+    setDraft("");
+  }
+
   return <>
-    <section className="section-heading"><div><p className="eyebrow">PACK LIST</p><h2>裝備</h2><p className="section-lede">從行事曆整理的個人裝備，共 {personalGear.length} 項。</p></div></section>
-    <section className="gear-page"><div className="gear-page-head"><span className="gear-menu-icon">✓</span><div><h3>個人裝備清單</h3><p>出發前逐項確認；Excel 備註一併保留。</p></div></div><div className="gear-list">{personalGear.map((gear, index) => <div className="gear-row" key={gear.id}><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{gear.item}</strong>{gear.note && <small>{gear.note}</small>}</div></div>)}</div></section>
+    <section className="section-heading"><div><p className="eyebrow">PACK LIST</p><h2>裝備</h2><p className="section-lede">逐項確認出發準備，已完成 {checkedCount}／{items.length} 項。</p></div></section>
+    <section className="gear-page"><div className="gear-page-head"><span className="gear-menu-icon">✓</span><div><h3>個人裝備清單</h3><p>點選方塊確認；清單可依現場需要自行增加或刪除。</p></div></div><div className="gear-list">{items.length ? items.map((gear, index) => <div className={`gear-row ${gear.checked ? "is-checked" : ""}`} key={gear.id}><label className="gear-check-control"><input type="checkbox" checked={Boolean(gear.checked)} onChange={() => onToggle(gear.id)} /><span className="gear-checkbox" aria-hidden="true">✓</span><span className="gear-index">{String(index + 1).padStart(2, "0")}</span><span className="gear-copy"><strong>{gear.item}</strong>{gear.note && <small>{gear.note}</small>}</span></label><button className="gear-delete" type="button" onClick={() => onDelete(gear.id)} aria-label={`刪除${gear.item}`}>×</button></div>) : <EmptyState icon="✓" title="清單是空的" text="可以從下方新增第一項裝備。" />}</div><form className="gear-add-form" onSubmit={submit}><label><span>新增裝備</span><input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="例如：防水袋" /></label><button className="primary-button" type="submit" disabled={!draft.trim()}>新增</button></form></section>
   </>;
 }
 
@@ -355,13 +393,20 @@ function ExpensesView({ expenses, form, setForm, onSave, onEdit, onExport }: { e
   </>;
 }
 
-function FieldView({ notes, form, setForm, onSave, onExport, onDelete }: { notes: FieldNote[]; form: Omit<FieldNote, "id" | "createdAt">; setForm: React.Dispatch<React.SetStateAction<Omit<FieldNote, "id" | "createdAt">>>; onSave: (event: React.FormEvent) => void; onExport: () => void; onDelete: (id: string) => void }) {
+function FieldView({ notes, form, setForm, onSave, onExport, onDelete }: { notes: FieldNote[]; form: FieldNoteDraft; setForm: React.Dispatch<React.SetStateAction<FieldNoteDraft>>; onSave: (event: React.FormEvent) => void; onExport: () => void; onDelete: (id: string) => void }) {
   return <>
     <section className="section-heading"><div><p className="eyebrow">FIELD NOTES</p><h2>田野記錄</h2></div><button className="ghost-button" onClick={onExport}>匯出 CSV</button></section>
     <div className="field-intro"><span className="field-mark">◌</span><div><h3>把現場的聲音留下來</h3><p>記錄觀察、訪談、影像線索與策展靈感。資料只存在這台裝置，按下匯出即可帶走。</p></div></div>
     <form className="entry-form field-form" onSubmit={onSave}><div className="form-grid"><label>日期<input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></label><label>記錄類型<select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}><option>觀察</option><option>訪談</option><option>影像</option><option>聲音</option><option>策展靈感</option></select></label><label>地點<input placeholder="例如：Ba Ole 村落" value={form.place} onChange={(e) => setForm({ ...form, place: e.target.value })} /></label><label>對象／關係人<input placeholder="可留白" value={form.person} onChange={(e) => setForm({ ...form, person: e.target.value })} /></label><label className="wide">標題<input placeholder="這筆記錄的主題" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label><label className="wide">內容<textarea rows={5} placeholder="看到什麼、聽到什麼、還需要追問什麼？" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} /></label></div><button className="primary-button" type="submit">新增田野記錄</button></form>
-    <section className="entry-list"><div className="list-heading"><h3>已保存的記錄</h3><span>{notes.length} 筆</span></div>{notes.length === 0 ? <EmptyState icon="✎" title="還沒有田野記錄" text="在村落、移動途中或回到住宿後，都可以補記。" /> : notes.map((note) => <article className="field-row" key={note.id}><div className="field-tag">{note.type}</div><div className="row-main"><strong>{note.title || "未命名記錄"}</strong><span>{note.date} · {note.place || "未填地點"}{note.person ? ` · ${note.person}` : ""}</span><p>{note.body}</p></div><button className="delete-button" onClick={() => onDelete(note.id)}>刪除</button></article>)}</section>
+    <section className="entry-list"><div className="list-heading"><h3>已保存的記錄</h3><span>{notes.length} 筆</span></div>{notes.length === 0 ? <EmptyState icon="✎" title="還沒有田野記錄" text="在村落、移動途中或回到住宿後，都可以補記。" /> : notes.map((note) => <article className="field-row" key={note.id}><div className="field-tag">{note.type}</div><div className="row-main"><strong>{note.title || "未命名記錄"}</strong><span>{note.date} · {note.place || "未填地點"}{note.person ? ` · ${note.person}` : ""}</span>{note.itemTitle && <small className="field-source">行程卡：{note.itemTitle}</small>}<p>{note.body}</p></div><button className="delete-button" onClick={() => onDelete(note.id)}>刪除</button></article>)}</section>
   </>;
+}
+
+function FieldNoteEditor({ draft, onClose, onSave }: { draft: FieldNoteDraft; onClose: () => void; onSave: (draft: FieldNoteDraft) => void }) {
+  const [form, setForm] = useState<FieldNoteDraft>(draft);
+  const valid = form.title.trim() || form.body.trim();
+
+  return <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="新增行程田野筆記"><div className="modal-card field-note-modal-card"><div className="modal-head"><div><span className="eyebrow">FIELD NOTE · {formatDate(draft.date)}</span><h3>{draft.itemTitle ? `記錄：${draft.itemTitle}` : "新增田野筆記"}</h3><p className="modal-context">這筆內容會同步彙整到「田調」頁面。</p></div><button className="close-button" onClick={onClose} aria-label="關閉">×</button></div><div className="form-grid"><label>日期<input type="date" value={form.date} onChange={(event) => setForm({ ...form, date: event.target.value })} /></label><label>記錄類型<select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })}><option>觀察</option><option>訪談</option><option>影像</option><option>聲音</option><option>策展靈感</option></select></label><label className="wide">地點<input value={form.place} onChange={(event) => setForm({ ...form, place: event.target.value })} placeholder="例如：Ba Ole 村落" /></label><label className="wide">標題<input value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} placeholder="這次看見或聽見什麼？" /></label><label className="wide">內容<textarea rows={6} value={form.body} onChange={(event) => setForm({ ...form, body: event.target.value })} placeholder="記下現場觀察、訪談內容、影像線索或待追問問題。" /></label></div><div className="modal-actions"><button className="ghost-button" onClick={onClose}>取消</button><button className="primary-button" disabled={!valid} onClick={() => valid && onSave(form)}>保存田野筆記</button></div></div></div>;
 }
 
 function CultureView() {

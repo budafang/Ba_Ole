@@ -187,6 +187,8 @@ p { color: var(--muted); font-size: 13px; line-height: 1.65; }
   white-space: nowrap;
 }
 .expense-link:hover { background: #e8edde; color: var(--ink); }
+.field-note-link { border: 1px solid #e0d8c7; background: #fbf7ed; color: #8d7657; border-radius: 8px; padding: 6px 8px; font-size: 10px; font-weight: 850; white-space: nowrap; }
+.field-note-link:hover { background: #f4ead9; color: var(--ink); }
 .fixed-label { color: #8a7861; font-size: 9px; font-weight: 800; white-space: nowrap; }
 .edit-link { border: 0; background: transparent; color: #8d9690; padding: 0; font-size: 10px; text-decoration: underline; text-underline-offset: 3px; }
 .edit-link:hover { color: var(--orange); }
@@ -200,12 +202,26 @@ p { color: var(--muted); font-size: 13px; line-height: 1.65; }
 .gear-page-head { display: flex; align-items: center; gap: 10px; padding: 17px 16px 13px; }
 .gear-page-head h3 { margin: 0 0 2px; font-size: 17px; }
 .gear-page-head p { margin: 0; font-size: 11px; }
-.gear-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; padding: 12px 16px 16px; border-top: 1px solid #e1e9dd; }
+.gear-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 12px 16px 16px; border-top: 1px solid #e1e9dd; }
 .gear-page .gear-list { border-top: 0; padding-top: 4px; }
-.gear-row { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
-.gear-row > span { color: #80a17e; font: 800 10px Georgia, "Times New Roman", serif; }
+.gear-row { display: flex; align-items: flex-start; gap: 5px; min-width: 0; padding: 9px 8px; background: rgba(255, 255, 255, .72); border: 1px solid #dfe8da; border-radius: 10px; }
+.gear-row.is-checked { background: #e8f2e5; border-color: #c4d9bf; }
+.gear-check-control { display: flex; align-items: flex-start; gap: 8px; min-width: 0; flex: 1; cursor: pointer; }
+.gear-check-control input { position: absolute; width: 18px; height: 18px; margin: 1px 0 0; opacity: 0; pointer-events: auto; }
+.gear-checkbox { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 1px; display: grid; place-items: center; border: 1.5px solid #a9bca5; border-radius: 5px; background: #fffefa; color: transparent; font-size: 12px; font-weight: 900; }
+.gear-check-control input:checked + .gear-checkbox { background: #5d8b68; border-color: #5d8b68; color: white; }
+.gear-check-control input:focus-visible + .gear-checkbox { outline: 3px solid rgba(93, 139, 104, .2); outline-offset: 2px; }
+.gear-index { color: #80a17e; font: 800 10px Georgia, "Times New Roman", serif; line-height: 1.8; }
+.gear-copy { min-width: 0; }
 .gear-row strong, .gear-row small { display: block; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
 .gear-row small { color: #9a8c79; font-size: 9px; }
+.gear-row.is-checked strong { color: #69806b; text-decoration: line-through; text-decoration-color: #9ab69a; }
+.gear-delete { flex: 0 0 22px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #a1aaa0; font-size: 17px; line-height: 1; }
+.gear-delete:hover { background: #f7e5dc; color: #b36d53; }
+.gear-add-form { display: flex; align-items: flex-end; gap: 9px; padding: 0 16px 17px; }
+.gear-add-form label { flex: 1; color: #66776e; font-size: 10px; font-weight: 800; }
+.gear-add-form input { margin-top: 5px; }
+.gear-add-form .primary-button { margin-top: 0; }
 .money-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-bottom: 16px; }
 .money-summary > div { background: #e5f0e3; border: 1px solid #d7e5d4; border-radius: 16px; padding: 14px; color: var(--ink); }
 .money-summary > div:nth-child(2) { background: #f9e8de; border-color: #f0d9cc; }
@@ -270,6 +286,7 @@ input, select, textarea { width: 100%; border: 1px solid #d9dcd4; background: #f
 .field-row { align-items: flex-start; }
 .field-tag { color: var(--orange); border: 1px solid #e3b5a0; border-radius: 99px; padding: 4px 7px; font-size: 9px; font-weight: 850; white-space: nowrap; }
 .field-row .row-main p { margin: 8px 0 0; font-size: 12px; white-space: pre-wrap; }
+.field-source { display: block; color: #8d7657; font-size: 10px; margin-top: 5px; }
 .delete-button { white-space: nowrap; }
 .culture-hero { background: linear-gradient(135deg, #e8f2e4, #faf0e4); border: 1px solid #dfe8da; border-radius: 20px; padding: 22px 23px; color: var(--ink); margin-bottom: 17px; display: flex; justify-content: space-between; overflow: hidden; }
 .culture-hero h3 { font-size: 25px; margin: 4px 0 7px; color: var(--ink); }
@@ -324,6 +341,7 @@ input, select, textarea { width: 100%; border: 1px solid #d9dcd4; background: #f
 .info-empty { margin: 0; }
 .info-links { display: grid; gap: 7px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
 .info-links a { color: #5c8568; font-size: 11px; font-weight: 800; text-decoration: none; }
+.field-note-modal-card { width: min(100%, 620px); }
 .modal-actions { justify-content: flex-end; margin-top: 8px; }
 .modal-actions .primary-button { margin-top: 0; }
 .modal-delete { margin: 0 auto 0 0; }
@@ -352,7 +370,7 @@ input, select, textarea { width: 100%; border: 1px solid #d9dcd4; background: #f
   .day-panel-top h3 { font-size: 22px; }
   .add-button { padding: 7px 9px; }
   .schedule-item { grid-template-columns: 23px 55px minmax(0, 1fr); gap: 8px; padding: 12px 9px; }
-  .schedule-actions { grid-column: 3; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; margin-top: 3px; }
+  .schedule-actions { grid-column: 3; flex-direction: row; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 7px 10px; margin-top: 3px; }
   .drag-handle { grid-column: 1; grid-row: 1 / span 2; width: 23px; }
   .schedule-legend { justify-content: flex-start; flex-wrap: wrap; gap: 6px 14px; }
   .money-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -370,6 +388,8 @@ input, select, textarea { width: 100%; border: 1px solid #d9dcd4; background: #f
   .row-amount strong { font-size: 11px; }
   .expense-row, .field-row { gap: 8px; padding: 11px 9px; }
   .gear-list { grid-template-columns: 1fr; }
+  .gear-add-form { align-items: stretch; flex-direction: column; }
+  .gear-add-form .primary-button { width: 100%; }
 }
 
 @media (max-width: 390px) {

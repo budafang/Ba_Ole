@@ -41,11 +41,18 @@ test("source keeps itinerary, expense, field-note, and PWA workflows", async () 
   assert.match(page, /itemId/);
   assert.match(page, /expense-link/);
   assert.match(page, /ExpenseEditor/);
+  assert.match(page, /FieldNoteEditor/);
+  assert.match(page, /onFieldNote/);
+  assert.match(page, /itemTitle/);
+  assert.match(page, /swak-ali-field-notes/);
   assert.match(page, /ItemInfo/);
   assert.match(page, /個人裝備/);
   assert.match(page, /function GearView/);
   assert.match(page, /label="田調"/);
   assert.match(page, /label="裝備"/);
+  assert.match(page, /gear-check-control/);
+  assert.match(page, /gear-delete/);
+  assert.match(page, /swak-ali-gear/);
   assert.match(page, /label="More"/);
   assert.doesNotMatch(page, /行前提醒與重要資料|trip-briefing|function GearMenu/);
   assert.doesNotMatch(page, /FIELD ITINERARY|swak-ali-itinerary\.json/);
